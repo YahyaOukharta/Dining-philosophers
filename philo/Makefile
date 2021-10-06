@@ -1,6 +1,7 @@
 NAME = philo
 
 SRCS =  main.c \
+		parsing.c \
 		utils/ft_atoi.c \
 		utils/ft_isdigit.c
 

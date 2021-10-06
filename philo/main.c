@@ -1,99 +1,83 @@
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/time.h>
-#include <string.h>
-#include <stdio.h>
-#include "utils/utils.h"
+#include "philo.h"
 
-typedef struct  s_philo
-{
-    int         index;
-    int         state; // 0 sleeping // 1 thinking // 2 eating 
-    int         right_fork;
-    pthread_t   *thread;
-}               t_philo;
+// void _think(void *data)
+// {
 
-typedef struct  s_data
-{
-    t_philo     **philosophers;
-    int         number_of_philosophers;
-    int         time_to_die;
-    int         time_to_eat;
-    int         time_to_sleep;
-    int         number_of_times_each_philosopher_must_eat;
-}               t_data;
+// }
 
-int print_usage(void)
+void print_status(t_philo *philo)
 {
-    write(1, "usage: ./philo number_of_philosophers time_to_die time_to_eat time_to_sleep [number_of_times_each_philosopher_must_eat]\n",120);
-    return (1);
+    pthread_mutex_lock(philo->print_mutex);
+    printf("philo %d is in state %d\n", philo->index, philo->state);
+    pthread_mutex_unlock(philo->print_mutex);
 }
 
-int parse_args(char **args, t_data *data, int optional)
+void _sleep(void *philosopher)
 {
-    int arg;
-
-    if ((arg = ft_atoi(args[0])) <= 0)
-        return(1);
-    data->number_of_philosophers = arg;
-    if ((arg = ft_atoi(args[1])) <= 0)
-        return(2);
-    data->time_to_die = arg;
-    if ((arg = ft_atoi(args[2])) <= 0)
-        return(3);
-    data->time_to_eat = arg;
-    if ((arg = ft_atoi(args[3])) <= 0)
-        return(4);
-    data->time_to_sleep = arg;  
-    if(optional)
-    {
-        if ((arg = ft_atoi(args[4])) <= 0)
-            return(5);
-        data->time_to_sleep = arg;
-    }
-    return (0);
-}
-int print_args_error(int err)
-{
-    //number_of_philosophers time_to_die time_to_eat time_to_sleep [number_of_times_each_philosopher_must_eat]
-    if (err == 1)
-        printf("Error in args: number_of_philosophers must be > 0\n");
-    if (err == 2)
-        printf("Error in args: time_to_die must be > 0\n");
-    if (err == 3)
-        printf("Error in args: time_to_eat must be > 0\n");
-    if (err == 4)
-        printf("Error in args: time_to_sleep must be > 0\n");
-    if (err == 5)
-        printf("Error in args: number_of_times_each_philosopher_must_eat must be > 0\n");
-    return (1);
+    ((t_philo *)philosopher)->state = 2;
+    print_status(((t_philo *)philosopher));
+    usleep(((t_philo *)philosopher)->data->time_to_eat);
 }
 
-void    *start_routine(void *philosopher)
+void _eat(void *philosopher)
 {
     t_philo *philo;
 
     philo = (t_philo *)philosopher;
-    printf("philo %d \n", philo->index);
+    philo->state = 0;
+    print_status(philo);
+    pthread_mutex_lock(&philo->right_fork);
+    pthread_mutex_lock(philo->left_fork);
+    philo->state = 1;
+    print_status(philo);
+    usleep(philo->data->time_to_eat);
+
+    pthread_mutex_unlock(&philo->right_fork);
+    pthread_mutex_unlock(philo->left_fork);
+}
+
+void    *start_routine(void *philosopher)
+{
+
+    t_philo *philo;
+
+    philo = (t_philo *)philosopher;
+    //printf("philo %d \n", philo->index);
+    while (1)
+    {
+        _eat(philosopher);
+        _sleep(philosopher);
+        usleep(100);
+    }
+
     return (0);
 }
 
 void init_philos(t_data *data)
 {
-    int i;
+    int i; 
 
     data->philosophers = (t_philo **)malloc(sizeof(t_philo *) * data->number_of_philosophers);
     i = 0;
+    pthread_mutex_init(&(data->print_mutex), NULL);
+
     while (i < data->number_of_philosophers)
     {
         data->philosophers[i] = (t_philo *)malloc(sizeof(t_philo));
         data->philosophers[i]->index = i;
         data->philosophers[i]->state = 0;
-        data->philosophers[i]->right_fork = 0;
-        data->philosophers[i]->thread = (pthread_t *)malloc(sizeof(pthread_t));
+        data->philosophers[i]->print_mutex = &(data->print_mutex);
+        pthread_mutex_init(&data->philosophers[i]->right_fork, NULL);
+        data->philosophers[i]->data = data;
         i++;
     }
+    i = 0;
+    while (i < data->number_of_philosophers)
+    {
+        data->philosophers[i]->left_fork = &data->philosophers[i ? i - 1 : data->number_of_philosophers - 1]->right_fork;
+        i++;
+    }
+
 }
 
 void init_threads(t_data *data)
@@ -103,7 +87,8 @@ void init_threads(t_data *data)
     i = 0;
     while (i < data->number_of_philosophers)
     {
-        pthread_create(data->philosophers[i]->thread, NULL, &start_routine, (void *)(data->philosophers[i]));
+        pthread_create(&(data->philosophers[i]->thread), NULL, &start_routine, (void *)(data->philosophers[i]));
+        usleep(100);
         i++;
     }
 }
@@ -118,7 +103,10 @@ int main(int ac, char ** av)
         return (print_args_error(err));
     init_philos(&data);
     init_threads(&data);
-
+    while(1)
+    {
+        usleep(1000);
+    }
     // pthread_create(pthread_t * thread, 
     //                const pthread_attr_t * attr, 
     //                void * (*start_routine)(void *), 
