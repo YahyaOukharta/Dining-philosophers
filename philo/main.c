@@ -8,7 +8,8 @@
 void print_status(t_philo *philo)
 {
     pthread_mutex_lock(philo->print_mutex);
-    printf("philo %d is in state %d\n", philo->index, philo->state);
+    char *state = (philo->state == 1 ? "eating" : (philo->state == 2 ? "sleeping":"thinking"));
+    printf("%lld philo %d is %s\n", get_time() - philo->data->init_time ,philo->index + 1, state);
     pthread_mutex_unlock(philo->print_mutex);
 }
 
@@ -16,7 +17,7 @@ void _sleep(void *philosopher)
 {
     ((t_philo *)philosopher)->state = 2;
     print_status(((t_philo *)philosopher));
-    usleep(((t_philo *)philosopher)->data->time_to_eat);
+    my_sleep(((t_philo *)philosopher)->data->time_to_sleep * 1000);
 }
 
 void _eat(void *philosopher)
@@ -30,7 +31,7 @@ void _eat(void *philosopher)
     pthread_mutex_lock(philo->left_fork);
     philo->state = 1;
     print_status(philo);
-    usleep(philo->data->time_to_eat);
+    my_sleep(philo->data->time_to_eat * 1000);
 
     pthread_mutex_unlock(&philo->right_fork);
     pthread_mutex_unlock(philo->left_fork);
@@ -47,7 +48,6 @@ void    *start_routine(void *philosopher)
     {
         _eat(philosopher);
         _sleep(philosopher);
-        usleep(100);
     }
 
     return (0);
@@ -60,7 +60,6 @@ void init_philos(t_data *data)
     data->philosophers = (t_philo **)malloc(sizeof(t_philo *) * data->number_of_philosophers);
     i = 0;
     pthread_mutex_init(&(data->print_mutex), NULL);
-
     while (i < data->number_of_philosophers)
     {
         data->philosophers[i] = (t_philo *)malloc(sizeof(t_philo));
@@ -84,6 +83,7 @@ void init_threads(t_data *data)
 {
     int i;
 
+    data->init_time = get_time();
     i = 0;
     while (i < data->number_of_philosophers)
     {
