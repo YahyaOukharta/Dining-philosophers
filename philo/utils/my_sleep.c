@@ -1,9 +1,9 @@
 #include "utils.h"
 #include <stdio.h>
-void my_sleep(long long time_in_ms)
-{
-    
-    usleep(time_in_ms/2);
-    usleep(time_in_ms/2);
 
+void my_sleep(long long t)
+{
+    long long start = get_time();
+    usleep((t - 10) * 1000);
+    while ((long long)get_time() - start < t);
 }

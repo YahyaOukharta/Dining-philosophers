@@ -17,7 +17,7 @@ void _sleep(void *philosopher)
 {
     ((t_philo *)philosopher)->state = 2;
     print_status(((t_philo *)philosopher));
-    my_sleep(((t_philo *)philosopher)->data->time_to_sleep * 1000);
+    my_sleep(((t_philo *)philosopher)->data->time_to_sleep);
 }
 
 void _eat(void *philosopher)
@@ -27,11 +27,13 @@ void _eat(void *philosopher)
     philo = (t_philo *)philosopher;
     philo->state = 0;
     print_status(philo);
-    pthread_mutex_lock(&philo->right_fork);
+
     pthread_mutex_lock(philo->left_fork);
+    pthread_mutex_lock(&philo->right_fork);
+
     philo->state = 1;
     print_status(philo);
-    my_sleep(philo->data->time_to_eat * 1000);
+    my_sleep(philo->data->time_to_eat);
 
     pthread_mutex_unlock(&philo->right_fork);
     pthread_mutex_unlock(philo->left_fork);
@@ -83,12 +85,14 @@ void init_threads(t_data *data)
 {
     int i;
 
-    data->init_time = get_time();
     i = 0;
     while (i < data->number_of_philosophers)
     {
+        if(!i)
+            data->init_time = get_time();
         pthread_create(&(data->philosophers[i]->thread), NULL, &start_routine, (void *)(data->philosophers[i]));
-        usleep(100);
+        if(!i % 2)
+            usleep(30);
         i++;
     }
 }
@@ -107,10 +111,5 @@ int main(int ac, char ** av)
     {
         usleep(1000);
     }
-    // pthread_create(pthread_t * thread, 
-    //                const pthread_attr_t * attr, 
-    //                void * (*start_routine)(void *), 
-    //                void *arg)
-
     return (0);
 }
