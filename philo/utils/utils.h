@@ -4,7 +4,7 @@
 # include <unistd.h>
 int	ft_atoi(const char *str);
 int	ft_isdigit(int c);
-unsigned long long get_time();
+long long get_time();
 void my_sleep(long long);
 
 #endif

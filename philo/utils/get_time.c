@@ -1,6 +1,6 @@
 #include "utils.h"
 
-unsigned long long get_time()
+long long get_time()
 {
     struct timeval current_time;
     
