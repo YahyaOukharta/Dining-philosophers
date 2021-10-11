@@ -38,6 +38,7 @@ typedef struct      s_data
     int             number_of_times_each_philosopher_must_eat;
     pthread_mutex_t print_mutex;
     int             death_occured;
+    int             done;
 }                   t_data;
 
 int print_usage(void);

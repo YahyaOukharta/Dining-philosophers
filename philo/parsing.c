@@ -21,12 +21,13 @@ int parse_args(char **args, t_data *data, int optional)
     data->time_to_eat = arg;
     if ((arg = ft_atoi(args[3])) <= 0)
         return(4);
-    data->time_to_sleep = arg;  
+    data->time_to_sleep = arg;
+    data->number_of_times_each_philosopher_must_eat = 0;
     if(optional)
     {
         if ((arg = ft_atoi(args[4])) <= 0)
             return(5);
-        data->time_to_sleep = arg;
+        data->number_of_times_each_philosopher_must_eat = arg;
     }
     return (0);
 }

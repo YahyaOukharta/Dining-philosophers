@@ -9,13 +9,13 @@ void print_status(t_philo *philo, int has_taken_fork)
 {
     pthread_mutex_lock(philo->print_mutex);
     if(has_taken_fork)
-        printf("%lld %d has taken a fork\n", get_time() - philo->data->init_time, philo->index + 1);
+        printf("%.6lld %d has taken a fork\n", get_time() - philo->data->init_time, philo->index + 1);
     else if(philo->is_dead)
-        printf("%lld %d died\n", get_time() - philo->data->init_time, philo->index + 1);
+        printf("%.6lld %d died\n", get_time() - philo->data->init_time, philo->index + 1);
     else if(philo->state)
     {
         char *state = (philo->state == 1 ? "eating" : (philo->state == 2 ? "sleeping":"thinking"));
-        printf("%lld %d is %s\n", get_time() - philo->data->init_time ,philo->index + 1, state);
+        printf("%.6lld %d is %s\n", get_time() - philo->data->init_time ,philo->index + 1, state);
     }
     pthread_mutex_unlock(philo->print_mutex);
 }
@@ -33,13 +33,13 @@ void _eat(void *philosopher)
 
     philo = (t_philo *)philosopher;
     philo->state = 0;
-    print_status(philo, 0);
+    print_status(philo, 0); //thiking
 
     pthread_mutex_lock(philo->left_fork);
     print_status(philo, 1);
 
     pthread_mutex_lock(&philo->right_fork);
-    print_status(philo, 1);
+    print_status(philo, 1); //forks taken
 
     philo->state = 1;
     philo->last_meal_time = get_time() - philo->data->init_time;
@@ -51,13 +51,34 @@ void _eat(void *philosopher)
     pthread_mutex_unlock(philo->left_fork);
 }
 
+int everyone_ate(t_data *data)
+{
+    int i = 0;
+    if (data->done)
+        return (1);
+    if (!data->number_of_times_each_philosopher_must_eat)
+        return (0);
+    while(i < data->number_of_philosophers)
+    {
+        if (data->philosophers[i]->n_meals < data->number_of_times_each_philosopher_must_eat)
+            return (0);
+        i++;
+    }
+    data->done = 1;
+    return (1);
+}
+
 void    *monitor_routine(void *philosopher)
 {
     t_philo *philo;
     philo = (t_philo *)philosopher;
 
-    while (!philo->data->death_occured)
+    while (!philo->data->death_occured && !everyone_ate(philo->data))
     {
+        if (everyone_ate(philo->data))
+        {
+            break;
+        }
         if (get_time() - philo->data->init_time - philo->last_meal_time > philo->data->time_to_die)
         {
             philo->is_dead = 1;
@@ -65,6 +86,7 @@ void    *monitor_routine(void *philosopher)
             print_status(philo, 0);
             break;
         }
+
         usleep(100);
     }
     return (0);
@@ -76,12 +98,12 @@ void    *start_routine(void *philosopher)
 
     philo = (t_philo *)philosopher;
     pthread_create(&(philo->monitor_thread), NULL, &monitor_routine, philosopher);
-    while (1)
+    while (!everyone_ate(philo->data))
     {
-        if (philo->data->death_occured)
+        if (philo->data->death_occured || everyone_ate(philo->data))
             return(0);
         _eat(philosopher);
-        if (philo->data->death_occured)
+        if (philo->data->death_occured || everyone_ate(philo->data))
             return(0);
         _sleep(philosopher);
     }
@@ -143,6 +165,7 @@ int main(int ac, char ** av)
         return (print_args_error(err));
     init_philos(&data);
     init_threads(&data);
-    while(!data.death_occured);
+    while(!data.death_occured && !everyone_ate(&data))
+        usleep(100);
     return (0);
 }
