@@ -22,7 +22,7 @@ typedef struct      s_philo
     long long       last_meal_time;
     int             n_meals;
     int             is_dead;
-
+    int             is_eating;
     pthread_t       monitor_thread;
     t_data          *data;
 }                   t_philo;

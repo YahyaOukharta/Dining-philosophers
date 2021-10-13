@@ -7,11 +7,11 @@ SRCS =  main.c \
 		utils/my_sleep.c \
 		utils/ft_isdigit.c
 
-FLAGS = -Wall -Werror -Wextra -g -fsanitize=address 
+FLAGS = -Wall -Werror -Wextra -pthread 
 
 all : $(NAME)
 
-$(NAME) :
+$(NAME) : $(SRCS)
 	gcc -o $(NAME) $(FLAGS) $(SRCS)
 	rm -rf $(NAME).dSYM
 clean:
