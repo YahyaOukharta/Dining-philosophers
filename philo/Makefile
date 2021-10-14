@@ -7,7 +7,7 @@ SRCS =  main.c \
 		utils/my_sleep.c \
 		utils/ft_isdigit.c
 
-FLAGS = -Wall -Werror -Wextra -pthread 
+FLAGS = -Wall -Werror -Wextra #-fsanitize=address
 
 all : $(NAME)
 
