@@ -45,5 +45,7 @@ int print_usage(void);
 int parse_args(char **args, t_data *data, int optional);
 int print_args_error(int err);
 
+void   kill_everyone(t_data *data);
+
 
 #endif
