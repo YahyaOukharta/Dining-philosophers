@@ -6,7 +6,7 @@
 /*   By: youkhart <youkhart@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/01 07:30:51 by youkhart          #+#    #+#             */
-/*   Updated: 2021/11/01 07:57:47 by youkhart         ###   ########.fr       */
+/*   Updated: 2021/11/01 08:01:11 by youkhart         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,7 @@ void	cleanup(t_data *data)
 		while (i < data->number_of_philosophers)
 		{
 			pthread_mutex_destroy(&(data->philosophers[i]->right_fork));
+			pthread_detach(data->philosophers[i]->thread);
 			free(data->philosophers[i]);
 			i++;
 		}
